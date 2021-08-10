@@ -1,0 +1,90 @@
+<html>
+
+<head>
+  <title>Create DID</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+<div id="wallet-div" class="card" style="max-width: 36rem;">
+  <div class="card-header">Create a DID</div>
+  <div class="card-body">
+  <div v-if="did == null">
+    <p>We are going to create a DID to issue certificates.</p>
+    <p>seed and memo are optional. Use 32 characters in seed. You can create the same DID every time if you use the same seed.</p>
+    <div class="form-group">
+      <label for="seedInput">seed</label>
+      <input type="text" name="seed" class="form-control" id="seedInput">
+    </div>
+    <div class="form-group">
+      <label for="memoInput">memo</label>
+      <input type="text" name="memo" class="form-control" id="memoInput">
+    </div>
+    <a v-on:click="createDID" class="btn btn-primary">create</a></p>
+  </div>
+  <div v-else>
+    <p>A DID has created.</p>
+    <p><span class="badge badge-info">DID</span> {{ did.did }}<br/>
+       <span class="badge badge-info">verkey</span> {{ did.verkey }}<br/>
+       <span class="badge badge-info">memo</span> "{{ did.metadata }}"
+    </p>
+    <p>You have to register this DID as an ENDORSER <a href="http://dev.greenlight.bcovrin.vonx.io/">here</a>.
+      You can use INDY CLI if you want to use your own pool. You need STEWARD role to execute this:
+    </p>
+    <pre>
+&gt; ledger nym did={{ did.did }} verkey={{ did.verkey }} role=ENDORSER
+    </pre>
+    <p>Let's go register a schema when you're done registering this DID.</p>
+    <p><a href="schema.html" class="btn btn-primary">Go register a schema</a></p>
+  </div>
+  </div>
+</div>
+</body>
+
+<script>
+var app = new Vue({
+    el: '#wallet-div',
+    data: {
+        did: null
+    },
+    mounted () {
+      axios
+        .get('/didList')
+        .then(res => {
+            if (res.data.error != null)
+                throw new Error(res.data.error.message)
+            if (res.data.list != null && res.data.list.length > 0)
+                this.did = res.data.list[0];
+        })
+        .catch(error => {
+            alert('failed to get did list: ' + error.toString())
+        })
+    },
+    methods: {
+      createDID: function() {
+        let seed = document.querySelector('input[name="seed"]').value;
+        let memo = document.querySelector('input[name="memo"]').value;
+        if (seed.length > 0 && seed.length != 32) {
+            alert('seed should be 32 bytes or empty');
+            return;
+        }
+        axios
+          .post('/did', { seed: seed, memo: memo })
+          .then(res => {
+              if (res.data.error != null)
+                  throw new Error(res.data.error.message)
+              this.did = res.data.newDID;
+          })
+          .catch(error => {
+              alert('failed to create did: ' + error.toString())
+          })
+      }
+    }
+})
+</script>
+</html>

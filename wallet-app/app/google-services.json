@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "110534102555",
+    "firebase_url": "https://identity-demo-c45ef.firebaseio.com",
+    "project_id": "identity-demo-c45ef",
+    "storage_bucket": "identity-demo-c45ef.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:110534102555:android:d54516bcb4d7664661f2be",
+        "android_client_info": {
+          "package_name": "com.naver.demo.identity"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "110534102555-i2v6vdvum1o1prda3icb6c8a08u5e7ra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9qzjPZOzrmnnKTg88ZitYvcZ1BXAje2I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "110534102555-i2v6vdvum1o1prda3icb6c8a08u5e7ra.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
