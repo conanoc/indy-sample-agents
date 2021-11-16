@@ -2,9 +2,9 @@
 
 This repository contains an example of issuing vaccination certificates using [Indy](https://indy.readthedocs.io/en/latest/).
 
-This example consists of two agents. A web agent is for an issuer who issues vaccination certificates.
+This example consists of three agents. A web agent is for an issuer who issues vaccination certificates.
 It shows step by step guides what to be done in Indy to issue credentials.
-A mobile agent is an android app to receive vaccination certificates and to present proofs of vaccination.
+Two mobile agents are android app and iOS app that receive vaccination certificates and present proofs of vaccination.
 
 ## SDKs and protocols
 
@@ -17,7 +17,7 @@ They use QR codes to initiate communication and use HTTP as a communication chan
 The agents use [BCovrin test network](http://dev.greenlight.bcovrin.vonx.io/) for Indy ledger.
 It can be changed easily by replacing `pool_transactions_genesis` file in the `web` folder.
 
-The mobile agent does not use the pool. It gets schema and credential definition from the web agents
+The mobile agent does not use the pool. It gets schema, credential definition, and revocation states from the web agents
 when it constructs proofs.
 
 ## Running the agents
@@ -29,8 +29,10 @@ Be aware that [installing Indy SDK on macOS](https://github.com/hyperledger/indy
 
 You can use the web agent by visiting http://localhost:3000.
 
-You need Android Studio and an android device to run the mobile agent. You cannot use android simulator to run the mobile agent bacause it needs qrcode scanner and it does not contain libraries for the simulator.
+You need Android Studio and an android device to run the android agent. You cannot use android simulator to run the mobile agent bacause it needs qrcode scanner and it does not contain libraries for the simulator.
 The android device should use WIFI on the same network as the web agent. Or the mobile agent will not be able to connect to the web agent.
+
+You need XCode and an iOS15 device to run the iOS agent. You also need cocoapods and cmake installed. Run `pod install` and open xcworkspace file.
 
 # More about the agents
 
@@ -53,23 +55,25 @@ Web agent works as follows:
 Web agent provides the following REST APIs for mobile agent:
 - `GET /credential/credOffer/{credId}`: get the credential offer
 - `POST /credential/credRequest/{credId}`: request the credential
+- `POST /credential/revoke/{credRevId}`: revoke the credential
 - `POST /credential/proof/{proofId}`: present a proof
 - `GET /schema`: get the schema
 - `GET /definition`: get the credential definition
+- `GET /revStates/{credRevId}`: get the revocation state
 
-## Mobile agent
+## Android agent
 
-Mobile agent is an android app:
+Android agent is an android app:
 - written in kotlin
 - use [ML Kit's barcode scanning API](https://firebase.google.com/docs/ml-kit/read-barcodes)
 - use [Libindy wrapper for Java](https://github.com/hyperledger/indy-sdk/tree/master/wrappers/java)
 
-Mobile agent works as follows:
+Android agent works as follows:
 - sets env variable `EXTERNAL_STORAGE` to `applicationContext.filesDir` telling where to create wallet files.
-- creates a wallet named `demoWallet` and open it. It takes some time.
+- creates a wallet named `demoWallet` and open it.
 - creates a master secret in the wallet and save the secret's ID in the `SharedPreference`.
 - most of the logics are implemented in `WalletMainActivity.kt`. It scans the qrcode, parse it, and decide whether to get a credential or to present a proof.
-- does not connect to the pool. The prover usually fetchs schema and credential definition from the ledger to create a proof. Which schema to fetch depends on the proof request. In this example, we use only one schema and one credential definition, so the mobile agent simply gets them from the web agent.
+- does not connect to the pool. The prover usually fetchs schema, credential definition, and revocation state from the ledger to create a proof. Which schema to fetch depends on the proof request. In this example, we use only one schema and one credential definition, so the Android agent simply gets them from the web agent.
 
 Notes on the libraries and dependencies:
 - Libindy wrapper for Java contains [JNA](https://github.com/java-native-access/jna) which does not support android. Exclude the JNA and import the proper version that support android.
@@ -80,6 +84,25 @@ Notes on the libraries and dependencies:
     implementation 'net.java.dev.jna:jna:5.8.0@aar'
 ```
 - Libindy wrapper for Java does not contain native libraries. `libindy.so` and `libc++_shared.so` should be located in the `wallet-app/app/src/main/jniLibs/{abi}` folder. You can find `libc++_shared.so` file in the NDK files if you install [NDK](https://developer.android.com/ndk).
+
+## iOS agent
+
+iOS agent is an iOS app:
+- written in Swift5 with SwiftUI
+- use [mercari/QRScanner](https://github.com/mercari/QRScanner)
+- use [Libindy wrapper for iOS](https://github.com/hyperledger/indy-sdk/tree/master/wrappers/ios)
+
+iOS agent works as follows:
+- doesn't need to set env variable `EXTERNAL_STORAGE`. Wallet files are created in the app's default document directory.
+- creates a wallet named `demoWallet` and open it.
+- creates a master secret in the wallet and save the secret's ID in the `UserDefaults`.
+- most of the logics are implemented in `RequestHandler.swift`. It processes getting a credential and presenting a proof.
+- like Android agent, does not connect to the pool.
+
+Notes on the Libindy wrapper for iOS:
+- [libindy-objc](https://github.com/hyperledger/indy-sdk/blob/master/Specs/libindy-objc/1.8.2/libindy-objc.podspec.json) podspec has some issues, so I created a new podspec [Indy](https://github.com/conanoc/indy-sdk/blob/master/Specs/Indy/1.16.1/Indy.podspec).
+The [PR](https://github.com/hyperledger/indy-sdk/pull/2442) is not merged yet and this sample app uses my fork repo https://github.com/conanoc/indy-sdk.git
+- Indy podspec depends on libzmq pod and libzmq pod uses cmake to install libzmq. So you need cmake installed on your mac.
 
 ## QR code data format
 

@@ -1,0 +1,33 @@
+PODS:
+  - Indy (1.16.1):
+    - libindy (= 1.16.0)
+    - libsodium
+    - libzmq (= 4.2.3)
+    - OpenSSL-XM
+  - libindy (1.16.0)
+  - libsodium (1.0.12)
+  - libzmq (4.2.3)
+  - OpenSSL-XM (1.0.210.1)
+
+DEPENDENCIES:
+  - Indy (= 1.16.1)
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - libsodium
+    - OpenSSL-XM
+  https://github.com/conanoc/indy-sdk.git:
+    - Indy
+    - libindy
+    - libzmq
+
+SPEC CHECKSUMS:
+  Indy: 624bde21bb97f4e48074542e6d5977f1ff9e5fc7
+  libindy: 179f07d0e1498fab26aff37e154c017094ab76da
+  libsodium: 9a8faa5ef2fa0d2d57bd7f7d79bf8fb7c1a9f0ea
+  libzmq: fcb6b6159c43147bc04174ec93cb65e5baaf016c
+  OpenSSL-XM: f2d7697be2a4b01a2c62239fd577e4137cab4f3a
+
+PODFILE CHECKSUM: 5f6b64543c281aa1a8ca669ba03ce51aee905bf8
+
+COCOAPODS: 1.11.2
