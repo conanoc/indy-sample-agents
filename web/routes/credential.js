@@ -14,7 +14,6 @@ function attributeObject(value) {
 }
 
 router.post('/credential', async function(req, res, next) {
-  let did = global.db.did.did;
   let definitionId = global.db.definitionId;
 
   let credOffer = await indy.issuerCreateCredentialOffer(global.wallet, definitionId);
@@ -56,16 +55,66 @@ router.post('/credential/credRequest/:credId', async function(req, res, next) {
     target: attributeObject(global.credentialContent[credId].target),
     date: attributeObject(new Date().toUTCString())
   };
-  console.log('===request body===');
-  console.log(JSON.stringify(req.body, null, 2));
+  // console.log('===request body===');
+  // console.log(JSON.stringify(req.body, null, 2));
 
   try {
-    let credentials = await indy.issuerCreateCredential(global.wallet, global.offers[req.params.credId], req.body.cred_request, credValues, null, -1);
-    console.log('===credential===');
-    console.log(JSON.stringify(credentials[0], null, 2));
-    res.json({credential: credentials[0]});
+    let [credential, credRevId, revRegDelta] = await indy.issuerCreateCredential(global.wallet,
+      global.offers[req.params.credId], req.body.cred_request, credValues, global.db.revRegDefId, await common.getTailsReader());
+    // console.log('===credential===');
+    // console.log(JSON.stringify(credential, null, 2));
+
+    let poolHandle = await common.openPoolLedger();
+    let did = global.db.did.did;
+    let revocRegEntryRequest = await indy.buildRevocRegEntryRequest(did, global.db.revRegDefId, "CL_ACCUM", revRegDelta);
+    let response = await indy.signAndSubmitRequest(poolHandle, global.wallet, did, revocRegEntryRequest);
+    await indy.closePoolLedger(poolHandle);
+    common.checkIndyResponse(response);
+
+    res.json({credential: credential, revRegDef: global.db.revRegDef});
   } catch(e) {
-    console.log(e.stack);
+    console.log(e);
+    res.json({ error: { message: e.message }});
+  }
+});
+
+router.get('/revStates/:credRevId', async function(req, res, next) {
+  try {
+    let poolHandle = await common.openPoolLedger();
+    let timestamp = common.getCurrentTimeInSeconds();
+    let did = global.db.did.did;
+    let getRevocRegDeltaRequest = await indy.buildGetRevocRegDeltaRequest(did, global.db.revRegDefId, 0, timestamp);
+    let getRevocRegDeltaResponse = await indy.submitRequest(poolHandle, getRevocRegDeltaRequest);
+    let [, revRegDelta, ] = await indy.parseGetRevocRegDeltaResponse(getRevocRegDeltaResponse);
+    await indy.closePoolLedger(poolHandle);
+
+    let revState = await indy.createRevocationState(await common.getTailsReader(), global.db.revRegDef, revRegDelta, timestamp, req.params.credRevId);
+
+    res.json({ revStates: {
+      [global.db.revRegDefId]: {
+        [timestamp]: revState
+      }
+    }, timestamp: timestamp});
+  } catch(e) {
+    console.log(e);
+    res.json({ error: { message: e.message }});
+  }
+});
+
+router.post('/credential/revoke/:credRevId', async function(req, res, next) {
+  try {
+    let revRegDelta = await indy.issuerRevokeCredential(global.wallet, await common.getTailsReader(), global.db.revRegDefId, req.params.credRevId);
+
+    let poolHandle = await common.openPoolLedger();
+    let did = global.db.did.did;
+    let revocRegEntryRequest = await indy.buildRevocRegEntryRequest(did, global.db.revRegDefId, "CL_ACCUM", revRegDelta);
+    let response = await indy.signAndSubmitRequest(poolHandle, global.wallet, did, revocRegEntryRequest);
+    await indy.closePoolLedger(poolHandle);
+    common.checkIndyResponse(response);
+
+    res.json({});
+  } catch(e) {
+    console.log(e);
     res.json({ error: { message: e.message }});
   }
 });
@@ -82,7 +131,7 @@ router.get('/credential/test/:credId', async function(req, res, next) {
   let [requestJson, requestMetadataJson] = await indy.proverCreateCredentialReq(global.wallet, global.db.did.did, JSON.stringify(offer.cred_offer), JSON.stringify(global.db.definition), secretId);
   let response = await axios.post(`http://localhost:3000/credential/credRequest/${req.params.credId}`, {cred_request: requestJson});
   await indy.proverStoreCredential(global.wallet, null, requestMetadataJson,
-    response.data.credential, global.db.definition, null);
+    response.data.credential, global.db.definition, response.data.revRegDef);
   res.send('OK');
 });
 

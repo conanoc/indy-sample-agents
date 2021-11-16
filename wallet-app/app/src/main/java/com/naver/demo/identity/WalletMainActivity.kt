@@ -2,11 +2,13 @@ package com.naver.demo.identity
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DownloadManager
 import android.app.ProgressDialog
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
+import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +30,7 @@ import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.did.Did
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -103,9 +106,10 @@ class WalletMainActivity : AppCompatActivity() {
 
             val response = inputStream.bufferedReader().use { it.readText() }
             val credential = JSONObject(response).getString("credential")
+            val revRegDef = JSONObject(response).getString("revRegDef")
             yield()
             Anoncreds.proverStoreCredential(app.indyWallet, null, credRequest.credentialRequestMetadataJson,
-                credential, offer.getString("cred_def"), null).get();
+                credential, offer.getString("cred_def"), revRegDef).get();
         }
     }
 
@@ -149,7 +153,12 @@ class WalletMainActivity : AppCompatActivity() {
         val credentialIdForAttribute1 = credential.getString("referent")
         val schemaId = credential.getString("schema_id")
         val credDefId = credential.getString("cred_def_id")
+        val credRevId = credential.getString("cred_rev_id")
         credentialsSearch.close()
+
+        val revinfo = URL("http://$server/revStates/$credRevId").readText()
+        val timestamp = JSONObject(revinfo).getLong("timestamp")
+        val revStates = JSONObject(revinfo).getString("revStates")
 
         val requestedCredentialsJson = JSONObject()
             .put("self_attested_attributes", JSONObject())
@@ -158,16 +167,16 @@ class WalletMainActivity : AppCompatActivity() {
                 .put("attr1_referent", JSONObject()
                     .put("cred_id", credentialIdForAttribute1)
                     .put("revealed", true)
+                    .put("timestamp", timestamp)
                 )
             )
             .toString()
 
         val schemas = JSONObject().put(schemaId, JSONObject(schemaJson)).toString()
         val credentialDefs: String = JSONObject().put(credDefId, JSONObject(credDefJson)).toString()
-        val revocStates = JSONObject().toString()
 
         val proofJson = Anoncreds.proverCreateProof(app.indyWallet, proofReq, requestedCredentialsJson,
-            app.masterSecretId, schemas, credentialDefs, revocStates).get();
+            app.masterSecretId, schemas, credentialDefs, revStates).get();
 
         yield()
         var result = "FAIL"

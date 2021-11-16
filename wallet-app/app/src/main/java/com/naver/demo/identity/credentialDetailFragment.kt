@@ -50,7 +50,7 @@ class credentialDetailFragment : Fragment() {
                     Recipient name: ${attrs.getString("target")}
                     Date of issueance: $date
                     
-                    Definition ID: ${it.getString("cred_def_id")}
+                    Revocation ID: ${it.getString("cred_rev_id")}
                 """.trimIndent()
 
         }

@@ -29,7 +29,7 @@
   {
     'tag': 'Demo',
     'type': 'CL',
-    'config': {"support_revocation": false}
+    'config': {"support_revocation": true}
   }
     </pre>
     <p><button v-on:click="createDefinition" class="btn btn-primary">Register this credential definition</button></p>
@@ -43,6 +43,7 @@
     <p><span class="badge badge-info">Definition ID</span> {{ definitionId }}</p>
     <p><a href="issue.html" class="btn btn-primary">Issue a vaccination certificate</a></p>
     <p><a href="verify.html" class="btn btn-primary">Verify vaccination</a></p>
+    <p><a href="revoke.html" class="btn btn-primary">Revoke a vaccination certificate</a></p>
   </div>
   </div>
 </div>

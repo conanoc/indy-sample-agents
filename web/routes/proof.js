@@ -19,7 +19,8 @@ router.post('/credential/proofRequest', async function(req, res, next) {
         'name': 'vaccine',
         'restrictions': [{'cred_def_id': definitionId}]
       }
-    }
+    },
+    'non_revoked': {"to": common.getCurrentTimeInSeconds()}
   };
 
   let proofId = crypto.randomBytes(8).toString('hex');
@@ -42,9 +43,27 @@ router.post('/credential/proofRequest', async function(req, res, next) {
 router.post('/credential/proof/:proofId', async function(req, res, next) {
   let result = false;
   try {
-    console.log('===proof===');
-    console.log(JSON.stringify(req.body, null, 2));
-    result = await indy.verifierVerifyProof(global.proofReqs[req.params.proofId], req.body, {[global.db.schemaId]: global.db.schema}, {[global.db.definitionId]: global.db.definition}, {}, {});
+    let proof = req.body;
+    // console.log('===proof===');
+    // console.log(JSON.stringify(proof, null, 2));
+
+    let did = global.db.did.did;
+    let timestamp = proof.identifiers[0].timestamp;
+    let poolHandle = await common.openPoolLedger();
+    let getRevocRegRequest = await indy.buildGetRevocRegRequest(did, global.db.revRegDefId, timestamp);
+    let getRevocRegResponse = await indy.submitRequest(poolHandle, getRevocRegRequest);
+    let [, revRegValue, ] = await indy.parseGetRevocRegResponse(getRevocRegResponse);
+    await indy.closePoolLedger(poolHandle);
+
+    let revRefDefs = {
+      [global.db.revRegDefId]: global.db.revRegDef
+    }
+    let revRegs = {
+      [global.db.revRegDefId]: {
+          [timestamp]: revRegValue
+      }
+    }
+    result = await indy.verifierVerifyProof(global.proofReqs[req.params.proofId], proof, {[global.db.schemaId]: global.db.schema}, {[global.db.definitionId]: global.db.definition}, revRefDefs, revRegs);
   } catch (e) {
     console.log(e);
   }
