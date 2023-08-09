@@ -9,5 +9,6 @@
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
     app:layoutManager="LinearLayoutManager"
+    android:orientation="vertical"
     tools:context=".WalletMainActivity"
     tools:listitem="@layout/menu_item_list_content" />

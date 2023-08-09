@@ -27,7 +27,9 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <include layout="@layout/menu_item_list" />
+        <include
+            android:id="@+id/menu_item_list"
+            layout="@layout/menu_item_list" />
     </FrameLayout>
 
 

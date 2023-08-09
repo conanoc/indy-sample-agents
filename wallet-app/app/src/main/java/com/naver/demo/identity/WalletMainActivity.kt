@@ -2,13 +2,10 @@ package com.naver.demo.identity
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.DownloadManager
 import android.app.ProgressDialog
 import android.content.*
-import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,10 +14,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.naver.demo.identity.databinding.ActivityWalletMainBinding
+import com.naver.demo.identity.databinding.MenuItemListContentBinding
 import com.naver.demo.identity.menu.MainMenu
-import kotlinx.android.synthetic.main.activity_wallet_main.*
-import kotlinx.android.synthetic.main.menu_item_list.*
-import kotlinx.android.synthetic.main.menu_item_list_content.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -30,26 +26,23 @@ import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.did.Did
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 class WalletMainActivity : AppCompatActivity() {
 
     private var twoPane: Boolean = false
+    private lateinit var binding: ActivityWalletMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_wallet_main)
 
-        setSupportActionBar(toolbar)
-        toolbar.title = title
+        binding = ActivityWalletMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
+        binding.toolbar.title = title
 
-        if (item_detail_container != null) {
-            twoPane = true
-        }
-
-        setupRecyclerView(item_list)
+        setupRecyclerView(binding.menuItemList.itemList)
         waitForWallet()
     }
 
@@ -288,7 +281,7 @@ class WalletMainActivity : AppCompatActivity() {
         private val values: List<MainMenu>,
         private val twoPane: Boolean
     ) :
-        RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+        RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.MenuItemHolder>() {
 
         private val onClickListener: View.OnClickListener
 
@@ -310,13 +303,12 @@ class WalletMainActivity : AppCompatActivity() {
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.menu_item_list_content, parent, false)
-            return ViewHolder(view)
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemHolder {
+            val binding = MenuItemListContentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            return MenuItemHolder(binding)
         }
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: MenuItemHolder, position: Int) {
             val item = values[position]
             holder.contentView.text = item.text
 
@@ -328,8 +320,8 @@ class WalletMainActivity : AppCompatActivity() {
 
         override fun getItemCount() = values.size
 
-        inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val contentView: TextView = view.content
+        inner class MenuItemHolder(val binding: MenuItemListContentBinding) : RecyclerView.ViewHolder(binding.root) {
+            val contentView: TextView = binding.content
         }
     }
 }

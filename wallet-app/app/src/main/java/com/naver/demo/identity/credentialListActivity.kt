@@ -10,10 +10,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.app.NavUtils
 import android.view.MenuItem
-
-import kotlinx.android.synthetic.main.activity_credential_list.*
-import kotlinx.android.synthetic.main.credential_list_content.view.*
-import kotlinx.android.synthetic.main.credential_list.*
+import com.naver.demo.identity.databinding.ActivityCredentialListBinding
+import com.naver.demo.identity.databinding.CredentialListBinding
+import com.naver.demo.identity.databinding.CredentialListContentBinding
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.json.JSONArray
 import org.json.JSONObject
@@ -33,26 +32,20 @@ class credentialListActivity : AppCompatActivity() {
      * device.
      */
     private var twoPane: Boolean = false
+    private lateinit var binding: ActivityCredentialListBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_credential_list)
 
-        setSupportActionBar(toolbar)
-        toolbar.title = title
+        binding = ActivityCredentialListBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
+        binding.toolbar.title = title
 
         // Show the Up button in the action bar.
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        if (credential_detail_container != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-w900dp).
-            // If this view is present, then the
-            // activity should be in two-pane mode.
-            twoPane = true
-        }
-
-        setupRecyclerView(credential_list)
+        setupRecyclerView(binding.credentialList.credentialList)
     }
 
     override fun onOptionsItemSelected(item: MenuItem) =
@@ -127,7 +120,8 @@ class credentialListActivity : AppCompatActivity() {
         override fun getItemCount() = values.length()
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val contentView: TextView = view.content
+            var contentBinding = CredentialListContentBinding.bind(view)
+            val contentView: TextView = contentBinding.content
         }
     }
 }

@@ -5,7 +5,7 @@ import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.MenuItem
-import kotlinx.android.synthetic.main.activity_credential_detail.*
+import com.naver.demo.identity.databinding.ActivityCredentialDetailBinding
 
 /**
  * An activity representing a single credential detail screen. This
@@ -14,13 +14,16 @@ import kotlinx.android.synthetic.main.activity_credential_detail.*
  * in a [credentialListActivity].
  */
 class credentialDetailActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityCredentialDetailBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_credential_detail)
-        setSupportActionBar(detail_toolbar)
 
-        fab.setOnClickListener { view ->
+        binding = ActivityCredentialDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.detailToolbar)
+
+        binding.fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own detail action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
@@ -50,7 +53,7 @@ class credentialDetailActivity : AppCompatActivity() {
             }
 
             supportFragmentManager.beginTransaction()
-                .add(R.id.credential_detail_container, fragment)
+                .add(binding.credentialDetailContainer.id, fragment)
                 .commit()
         }
     }

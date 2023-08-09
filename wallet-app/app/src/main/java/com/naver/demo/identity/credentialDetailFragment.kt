@@ -2,13 +2,12 @@ package com.naver.demo.identity
 
 import java.text.SimpleDateFormat
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.activity_credential_detail.*
-import kotlinx.android.synthetic.main.credential_detail.view.*
+import com.naver.demo.identity.databinding.ActivityCredentialDetailBinding
+import com.naver.demo.identity.databinding.CredentialDetailBinding
 import org.json.JSONObject
 import java.util.*
 
@@ -21,6 +20,8 @@ import java.util.*
 class credentialDetailFragment : Fragment() {
 
     private var item: JSONObject? = null
+    private lateinit var detailBinding: ActivityCredentialDetailBinding
+    private lateinit var binding: CredentialDetailBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +29,8 @@ class credentialDetailFragment : Fragment() {
         arguments?.let {
             if (it.containsKey(ARG_CREDENTIAL)) {
                 item = JSONObject(it.getString(ARG_CREDENTIAL))
-                activity?.toolbar_layout?.title = getString(R.string.title_credential_detail)
+                detailBinding = ActivityCredentialDetailBinding.inflate(layoutInflater)
+                detailBinding.toolbarLayout?.title = getString(R.string.title_credential_detail)
             }
         }
     }
@@ -37,12 +39,12 @@ class credentialDetailFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val rootView = inflater.inflate(R.layout.credential_detail, container, false)
-
+        binding = CredentialDetailBinding.inflate(inflater, container, false)
+        val rootView = binding.root
         item?.let {
             val attrs = it.getJSONObject("attrs")
             val date = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).parse(attrs.getString("date")).toLocaleString()
-            rootView.credential_detail.text =
+            binding.credentialDetail.text =
                 """
                     Issuer organization: ${attrs.getString("organization")}
                     Vaccine name: ${attrs.getString("vaccine")}
